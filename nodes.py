@@ -2,8 +2,10 @@
 """Experimental copy of Viggle Remake Conditioning with wider input ranges.
 
 The conditioning implementation follows Viggle Remake's ComfyUI node. Only its
-input bounds differ: legal H3 frame counts start at 5 (17n+5), and short-edge
-resolution follows ComfyUI's global integer limit instead of stopping at 736.
+input bounds differ: legal frame counts span 5–362 on the 17n+5 grid, and
+short-edge resolution follows ComfyUI's global integer limit instead of stopping
+at 736. A caller can use 362 model frames for a 15-second source, then trim the
+saved output to 15 seconds; this model length is experimental.
 """
 
 import torch
@@ -55,8 +57,8 @@ class RemakeConditioningExtended:
                 "ref_1": ("IMAGE", {"tooltip": "<Picture 1>: the edited frame-0 reference."}),
                 "pins": ("STRING", {"default": "", "tooltip": "One output frame per reference, e.g. '0'."}),
                 "frames": ("INT", {
-                    "default": 124, "min": 5, "max": 345, "step": 17,
-                    "tooltip": "24 fps; valid lengths are 17n+5 from 5 to 345 frames. Below 90 frames is outside the reference sampler's documented range.",
+                    "default": 124, "min": 5, "max": 362, "step": 17,
+                    "tooltip": "24 fps; valid lengths are 17n+5 from 5 to 362. The 362-frame input is experimental; trim its output to 15 seconds for a 15-second source.",
                 }),
                 "short_edge": ("INT", {
                     "default": 480, "min": 480, "max": nodes.MAX_RESOLUTION, "step": 8,
@@ -79,8 +81,8 @@ class RemakeConditioningExtended:
     def run(self, clip, vae, audio_vae, source, prompt, ref_1, pins, frames, short_edge,
             audio=None, ref_2=None, ref_3=None, ref_4=None):
         frame_count, se = frames, short_edge
-        if frame_count < 5 or frame_count > 345 or (frame_count - 5) % 17:
-            raise ValueError(f"frames must be 17n+5 in 5..345, got {frame_count}")
+        if frame_count < 5 or frame_count > 362 or (frame_count - 5) % 17:
+            raise ValueError(f"frames must be 17n+5 in 5..362, got {frame_count}")
         if se < 480 or se > nodes.MAX_RESOLUTION:
             raise ValueError(f"short_edge must be in 480..{nodes.MAX_RESOLUTION}, got {se}")
 

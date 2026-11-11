@@ -23,7 +23,7 @@ Use an API-format workflow containing `RemakeConditioningExtended`. To adapt an 
 
 Compared with upstream Viggle Remake Conditioning, this copy changes only the input bounds:
 
-- Frame counts: **5–345**, on the H3 `17n+5` grid. The official reference sampler documents 90–345 frames; anything below 90 is experimental and has not been validated by an end-to-end inference.
+- Frame counts: **5–362**, on the H3 `17n+5` grid. The official Viggle sampler and node remain capped at 345; counts below 90 are also outside the documented reference range. A 360-frame source (15 seconds) must be padded by its caller to 362 model frames and trimmed back to 360 output frames. The 362-frame model input is 15.083 seconds, two frames beyond H3's documented maximum, so this endpoint is experimental and not yet validated by inference.
 - Short edge: **480 through the installed ComfyUI `MAX_RESOLUTION`**, in steps of 8. A value of 1080 is accepted when the ComfyUI maximum allows it.
 
 At 24 fps, a two-second source has 48 frames. The longest legal unpadded grid prefix is 39 frames (1.625 seconds), leaving 9 source frames unused. The next legal count is 56 frames (2.333 seconds), which needs 8 padded frames. The node does not add that padding itself.
@@ -38,7 +38,7 @@ At a 1080 short edge, landscape canvas math targets 1920×1080. ComfyUI's MiniMa
 
 This node is based on Viggle Remake's ComfyUI implementation at upstream revision [`21665fa7`](https://huggingface.co/Viggle/Viggle-Remake/commit/21665fa7a1e038e0a5312fb15f37b18d0f06f117). The copied implementation preserves the upstream conditioning behavior and changes its input bounds. The original custom-node pack remains unchanged.
 
-The short-duration and 1080 settings are node-level capabilities, not evidence that the official sampler was trained or validated for those settings. The extended node has only been statically checked; no video inference results are claimed. The caller must also use a workflow with the extended node class type—the standard Viggle runner does not automatically switch to it.
+The short-duration and 1080 settings are node-level capabilities, not evidence that the official sampler was trained or validated for those settings. In particular, the 362-frame endpoint has not been end-to-end inference-validated. This repository contains the custom node only; a workflow or caller must select its class type explicitly. The node itself does not pad source videos or trim rendered outputs.
 
 ## License
 
