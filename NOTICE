@@ -1,0 +1,5 @@
+ComfyUI-Viggle-Remake-Extended includes a modified copy of the ComfyUI conditioning implementation from Viggle Remake:
+
+  https://huggingface.co/Viggle/Viggle-Remake
+
+The upstream source file is licensed under Apache-2.0 and identifies that license with an SPDX header. This copy registers the separate class type RemakeConditioningExtended and expands the accepted frame-count and short-edge bounds. No Viggle or MiniMax model weights, LoRAs, workflows, or media are included.
