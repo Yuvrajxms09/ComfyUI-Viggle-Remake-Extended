@@ -1,6 +1,6 @@
 # ComfyUI-Viggle-Remake-Extended
 
-An experimental ComfyUI custom node that adds wider input bounds to Viggle Remake's `RemakeConditioning` node. It registers under the separate class type `RemakeConditioningExtended`; it does not overwrite the official node.
+An experimental ComfyUI custom node that adds wider input bounds to Viggle Remake's `RemakeConditioning` node. It registers under the separate class type `RemakeConditioningExtended`; it does not overwrite the official node. The repository also includes an optional self-contained Colab inference cell.
 
 ## Install in Colab
 
@@ -11,13 +11,28 @@ Clone this public repository directly into ComfyUI's custom-node folder:
 !git clone https://github.com/Yuvrajxms09/ComfyUI-Viggle-Remake-Extended.git
 ```
 
-Change `/content/ComfyUI` if your ComfyUI checkout is elsewhere. Restart ComfyUI after cloning so the new node is registered. There are no extra pip dependencies; the module uses ComfyUI's own Python packages.
+For an existing clone, update it with:
+
+```python
+%cd /content/ComfyUI/custom_nodes/ComfyUI-Viggle-Remake-Extended
+!git pull --ff-only origin main
+```
+
+Change `/content/ComfyUI` if your ComfyUI checkout is elsewhere. Restart ComfyUI after cloning or updating so the changed node is registered. There are no extra pip dependencies for the node; it uses ComfyUI's own Python packages.
 
 Keep the official [Viggle Remake ComfyUI node pack](https://huggingface.co/Viggle/Viggle-Remake) installed as well. The full workflow also uses its `RemakeKeyframeUntil` and `RemakeNoise` nodes.
 
 ## Use
 
-Use an API-format workflow containing `RemakeConditioningExtended`. To adapt an official API graph, replace the conditioning node's `class_type` value `RemakeConditioning` with `RemakeConditioningExtended`. Set the frame count, short edge, reference images, and pins to match the source and task. This repository contains the custom node only; it does not contain a Viggle workflow, model weights, LoRAs, or media.
+Use an API-format workflow containing `RemakeConditioningExtended`. To adapt an official API graph, replace the conditioning node's `class_type` value `RemakeConditioning` with `RemakeConditioningExtended`. Set the frame count, short edge, reference images, and pins to match the source and task. This repository does not contain a Viggle workflow, model weights, LoRAs, or media.
+
+To load the optional end-to-end runner into an editable Colab cell, run this magic in an empty cell:
+
+```python
+%load https://raw.githubusercontent.com/Yuvrajxms09/ComfyUI-Viggle-Remake-Extended/main/examples/colab_inference_cell.py
+```
+
+The runner expects the Gemini instruction files and official Viggle `PROMPTING.md` and API workflow to be available in the paths it checks. It reads `GOOGLE_API_KEY` and `MAGICHOUR_API_KEY` from Colab Secrets or environment variables.
 
 ## What changes
 
