@@ -26,8 +26,7 @@ COMFY_URL = "http://127.0.0.1:8188"  # @param {type:"string"}
 
 FPS = 24
 MIN_FRAMES = 5
-OFFICIAL_MIN_FRAMES = 90
-OFFICIAL_MAX_FRAMES = 345
+CONDITIONING_NODE_CLASS = "RemakeConditioningExtended"
 MAX_SOURCE_FRAMES = 360  # 15 seconds at 24 fps
 MAX_MODEL_FRAMES = 362  # next 17n+5 length; 15.083 seconds, experimental for H3
 FRAME_STEP = 17
@@ -444,7 +443,7 @@ def build_edit_workflow(source_name, reference_name, prompt, frames, short_edge,
     workflow = json.loads(WORKFLOW_PATH.read_text(encoding="utf-8"))
     _, source = one_node(workflow, "LoadVideo")
     _, conditioning = one_node(workflow, "RemakeConditioning")
-    conditioning["class_type"] = conditioning_node_class(frames, short_edge)
+    conditioning["class_type"] = CONDITIONING_NODE_CLASS
     _, noise = one_node(workflow, "RemakeNoise")
     _, save = one_node(workflow, "SaveVideo")
     source["inputs"]["file"] = source_name
@@ -464,14 +463,6 @@ def build_edit_workflow(source_name, reference_name, prompt, frames, short_edge,
     noise["inputs"]["seed"] = seed
     save["inputs"]["filename_prefix"] = prefix
     return workflow
-
-
-def conditioning_node_class(model_frames, short_edge):
-    return "RemakeConditioningExtended" if (
-        model_frames < OFFICIAL_MIN_FRAMES
-        or model_frames > OFFICIAL_MAX_FRAMES
-        or short_edge > 736
-    ) else "RemakeConditioning"
 
 
 def get_video_output(job, save_node_id):
@@ -509,6 +500,11 @@ def render_viggle(video_path, request_text, resolution, comfy_url):
     run_dir.mkdir(parents=True, exist_ok=False)
 
     comfy_request(comfy_url, "/system_stats")
+    available_nodes = comfy_request(comfy_url, f"/object_info/{CONDITIONING_NODE_CLASS}")
+    if CONDITIONING_NODE_CLASS not in available_nodes:
+        raise RuntimeError(
+            f"This runner requires {CONDITIONING_NODE_CLASS}. Install the Viggle Remake Extended node on the ComfyUI server."
+        )
     source_frame = run_dir / "source_frame_000000.png"
     extract_first_frame(video_path, source_frame)
     normalized_input = run_dir / "comfy_input_source_24fps.mp4"
@@ -555,13 +551,6 @@ def render_viggle(video_path, request_text, resolution, comfy_url):
     workflow_path = run_dir / "workflow_api.json"
     workflow_path.write_text(json.dumps(workflow, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     save_node_id, _ = one_node(workflow, "SaveVideo")
-    conditioning_class = conditioning_node_class(frames, short_edge)
-    if conditioning_class == "RemakeConditioningExtended":
-        available_nodes = comfy_request(comfy_url, "/object_info/RemakeConditioningExtended")
-        if "RemakeConditioningExtended" not in available_nodes:
-            raise RuntimeError(
-                "This render needs RemakeConditioningExtended. Install the Viggle Remake Extended node on the ComfyUI server."
-            )
     manifest = {
         "source_video": str(video_path), "source_metadata": source_meta,
         "normalized_source": str(normalized_input), "prepared_comfy_input": str(comfy_input),

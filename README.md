@@ -32,7 +32,7 @@ To load the optional end-to-end runner into an editable Colab cell, run this mag
 %load https://raw.githubusercontent.com/Yuvrajxms09/ComfyUI-Viggle-Remake-Extended/main/examples/colab_inference_cell.py
 ```
 
-The runner expects the Gemini instruction files and official Viggle `PROMPTING.md` and API workflow to be available in the paths it checks. It reads `GOOGLE_API_KEY` and `MAGICHOUR_API_KEY` from Colab Secrets or environment variables.
+The runner always replaces the workflow's Conditioning node with `RemakeConditioningExtended`, so this extension must be installed on the ComfyUI server for every run. Keep the original Viggle pack installed for its `RemakeKeyframeUntil` and `RemakeNoise` nodes. The runner also expects the Gemini instruction files and official Viggle `PROMPTING.md` and API workflow to be available in the paths it checks. It reads `GOOGLE_API_KEY` and `MAGICHOUR_API_KEY` from Colab Secrets or environment variables.
 
 ## What changes
 
