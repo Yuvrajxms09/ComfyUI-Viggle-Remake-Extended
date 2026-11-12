@@ -36,10 +36,10 @@ The runner expects the Gemini instruction files and official Viggle `PROMPTING.m
 
 ## What changes
 
-Compared with upstream Viggle Remake Conditioning, this copy registers a separate node class and expands the input bounds. Its conditioning path follows upstream; validation also rejects API values that are not aligned to the accepted frame and canvas grids:
+Compared with upstream Viggle Remake Conditioning, this copy registers a separate node class and expands the input bounds. Its conditioning path follows upstream; frame counts are validated against the accepted H3 grid, while unaligned API canvas values are rounded to the nearest 32-pixel size:
 
 - Frame counts: **5–362**, on the H3 `17n+5` grid. The official Viggle sampler and node remain capped at 345; counts below 90 are also outside the documented reference range. A 360-frame source (15 seconds) can be padded by its caller to 362 model frames and trimmed back to 360 output frames. This path completed three 15-second inference runs on one ComfyUI 0.39.0 server; see [15-second validation](docs/15s-duration-validation.md). The 362-frame model input is 15.083 seconds, two frames beyond H3's documented maximum, so this remains experimental.
-- Short edge: **480 through the installed ComfyUI `MAX_RESOLUTION`**, in steps of 32. H3 canvas dimensions are multiples of 32; the Colab `1080p` preset uses a short edge of **1056** (the nearest lower aligned size). The node also validates API inputs, which can bypass the UI step setting.
+- Short edge: **480 through the installed ComfyUI `MAX_RESOLUTION`**, in steps of 32. H3 canvas dimensions are multiples of 32; the Colab `1080p` preset uses a short edge of **1088**, the closest aligned size to 1080. API values within range that are not aligned are rounded to the nearest valid size by the node.
 
 At 24 fps, a two-second source has 48 frames. The longest legal unpadded grid prefix is 39 frames (1.625 seconds), leaving 9 source frames unused. The next legal count is 56 frames (2.333 seconds), which needs 8 padded frames. The node does not add that padding itself.
 
@@ -47,13 +47,15 @@ At 24 fps, a two-second source has 48 frames. The longest legal unpadded grid pr
 
 The node has no general aspect-ratio input. It retains the source's aspect ratio only when the source short edge already equals the selected value and both dimensions are multiples of 32. Otherwise it resizes and center-crops to a 16:9-class landscape canvas or its portrait transpose. The first pinned reference is resized directly to the canvas when dimensions differ, so a mismatched reference can be stretched. Prepare the source and pinned image for the intended canvas if preserving their exact aspect ratio matters.
 
-For a 16:9-class landscape canvas, the current node math targets 1856×1056 for the `1080p` preset. The adjacent higher aligned bucket is 1920×1088. Both dimensions are multiples of 32, as required by the H3 pipeline documentation. The node may center-crop a source whose dimensions do not match its selected canvas.
+For a 16:9-class landscape canvas, the current node math targets 1920×1088 for the `1080p` preset; the next lower aligned canvas is 1856×1056. Both dimensions are multiples of 32, as required by the H3 pipeline documentation. The node may center-crop a source whose dimensions do not match its selected canvas.
+
+An earlier exact-1080 render failed in `SamplerCustomAdvanced` with a latent reshape error. At VAE stride 16, the 1080-pixel side produced 67 latent cells; the H3 transformer could not divide that odd dimension into 2-cell spatial patches. The node now rounds 1080 to 1088 (68 latent cells). See [resolution alignment and the recorded failure](docs/resolution-alignment.md). The failure has not yet been rerun at 1088, so this addresses the recorded shape mismatch but is not an end-to-end success claim.
 
 ## Compatibility and status
 
 This node is based on Viggle Remake's ComfyUI implementation at upstream revision [`21665fa7`](https://huggingface.co/Viggle/Viggle-Remake/commit/21665fa7a1e038e0a5312fb15f37b18d0f06f117). The copied implementation preserves the upstream conditioning behavior and changes its input bounds. The original custom-node pack remains unchanged.
 
-The short-duration and higher-resolution settings are node-level capabilities, not evidence that the official sampler was trained or validated for every setting. The Colab `1080p` preset requests 1056 pixels, not exactly 1080. The 362-frame endpoint has completed three end-to-end inference runs in one setup, but it is outside H3's published 15-second frame limit and is not an official support claim. This repository contains the custom node only; a workflow or caller must select its class type explicitly. The node itself does not pad source videos or trim rendered outputs.
+The short-duration and higher-resolution settings are node-level capabilities, not evidence that the official sampler was trained or validated for every setting. The Colab `1080p` preset requests 1088 pixels, not exactly 1080. The 362-frame endpoint has completed three end-to-end inference runs in one setup, but it is outside H3's published 15-second frame limit and is not an official support claim. This repository contains the custom node only; a workflow or caller must select its class type explicitly. The node itself does not pad source videos or trim rendered outputs.
 
 ## License
 
