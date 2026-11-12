@@ -62,7 +62,7 @@ class RemakeConditioningExtended:
                 }),
                 "short_edge": ("INT", {
                     "default": 480, "min": 480, "max": (nodes.MAX_RESOLUTION // 32) * 32, "step": 32,
-                    "tooltip": "Short edge in pixels; unaligned API values are rounded to the nearest multiple of 32.",
+                    "tooltip": "Maximum short edge in pixels; unaligned API values are rounded down to a multiple of 32.",
                 }),
             },
             "optional": {
@@ -86,12 +86,9 @@ class RemakeConditioningExtended:
         if se < 480 or se > nodes.MAX_RESOLUTION:
             raise ValueError(f"short_edge must be in 480..{nodes.MAX_RESOLUTION}, got {se}")
         requested_short_edge = se
-        max_aligned_edge = (nodes.MAX_RESOLUTION // 32) * 32
-        lower_edge = max(480, (requested_short_edge // 32) * 32)
-        upper_edge = min(lower_edge + 32, max_aligned_edge)
-        se = lower_edge if requested_short_edge - lower_edge < upper_edge - requested_short_edge else upper_edge
+        se = max(480, (requested_short_edge // 32) * 32)
         if se != requested_short_edge:
-            print(f"RemakeConditioningExtended: rounding short_edge {requested_short_edge} to {se} (multiple of 32).")
+            print(f"RemakeConditioningExtended: rounding short_edge down from {requested_short_edge} to {se} (multiple of 32).")
 
         refs = [image[:1, ..., :3] for image in (ref_1, ref_2, ref_3, ref_4) if image is not None]
         pins = [int(value) for value in pins.replace(",", " ").split()]

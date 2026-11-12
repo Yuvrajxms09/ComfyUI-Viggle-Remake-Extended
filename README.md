@@ -36,10 +36,10 @@ The runner expects the Gemini instruction files and official Viggle `PROMPTING.m
 
 ## What changes
 
-Compared with upstream Viggle Remake Conditioning, this copy registers a separate node class and expands the input bounds. Its conditioning path follows upstream; frame counts are validated against the accepted H3 grid, while unaligned API canvas values are rounded to the nearest 32-pixel size:
+Compared with upstream Viggle Remake Conditioning, this copy registers a separate node class and expands the input bounds. Its conditioning path follows upstream; frame counts are validated against the accepted H3 grid, while unaligned API short-edge values are rounded down to the largest 32-pixel size that does not exceed the request:
 
 - Frame counts: **5–362**, on the H3 `17n+5` grid. The official Viggle sampler and node remain capped at 345; counts below 90 are also outside the documented reference range. A 360-frame source (15 seconds) can be padded by its caller to 362 model frames and trimmed back to 360 output frames. This path completed three 15-second inference runs on one ComfyUI 0.39.0 server; see [15-second validation](docs/15s-duration-validation.md). The 362-frame model input is 15.083 seconds, two frames beyond H3's documented maximum, so this remains experimental.
-- Short edge: **480 through the installed ComfyUI `MAX_RESOLUTION`**, in steps of 32. H3 canvas dimensions are multiples of 32. The Colab resolution buckets treat their labels as maximum short edges and round down to stay within the cap: `480p` → 480, `720p` → 704, `1080p` → 1056. Raw unaligned API values are still rounded to the nearest valid size by the node.
+- Short edge: **480 through the installed ComfyUI `MAX_RESOLUTION`**, in steps of 32. H3 canvas dimensions are multiples of 32. The Colab resolution buckets and raw API inputs treat short edge as a maximum and round down: `480p` → 480, `720p` → 704, `1080p` → 1056.
 
 At 24 fps, a two-second source has 48 frames. The longest legal unpadded grid prefix is 39 frames (1.625 seconds), leaving 9 source frames unused. The next legal count is 56 frames (2.333 seconds), which needs 8 padded frames. The node does not add that padding itself.
 
@@ -49,7 +49,7 @@ The node has no general aspect-ratio input. It retains the source's aspect ratio
 
 For a 16:9-class landscape canvas, the `1080p` maximum-edge bucket targets 1856×1056, the largest aligned short edge no greater than 1080. The next higher aligned canvas is 1920×1088 and exceeds that cap. Both dimensions are multiples of 32, as required by the H3 pipeline documentation. The node may center-crop a source whose dimensions do not match its selected canvas.
 
-An earlier exact-1080 render failed in `SamplerCustomAdvanced` with a latent reshape error. At VAE stride 16, the 1080-pixel side produced 67 latent cells; the H3 transformer could not divide that odd dimension into 2-cell spatial patches. A raw API value of 1080 still rounds to nearest, 1088 (68 latent cells); the production `1080p` maximum-edge bucket instead sends 1056 (66 latent cells), which also avoids the recorded odd dimension while staying under the cap. See [resolution alignment and the recorded failure](docs/resolution-alignment.md). The exact case has not been rerun with either aligned size, so this is not an end-to-end success claim.
+An earlier exact-1080 render failed in `SamplerCustomAdvanced` with a latent reshape error. At VAE stride 16, the 1080-pixel side produced 67 latent cells; the H3 transformer could not divide that odd dimension into 2-cell spatial patches. The node now rounds 1080 down to 1056, which produces 66 latent cells and stays within the requested maximum. See [resolution alignment and the recorded failure](docs/resolution-alignment.md). The exact case has not been rerun at 1056, so this is not an end-to-end success claim.
 
 ## Compatibility and status
 
