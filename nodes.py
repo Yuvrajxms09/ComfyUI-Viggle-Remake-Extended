@@ -61,8 +61,8 @@ class RemakeConditioningExtended:
                     "tooltip": "24 fps; valid lengths are 17n+5 from 5 to 362. The 362-frame input is experimental; trim its output to 15 seconds for a 15-second source.",
                 }),
                 "short_edge": ("INT", {
-                    "default": 480, "min": 480, "max": nodes.MAX_RESOLUTION, "step": 8,
-                    "tooltip": "Short edge in pixels. The H3 VAE aligns encoded dimensions to its 16-pixel spatial grid.",
+                    "default": 480, "min": 480, "max": nodes.MAX_RESOLUTION, "step": 32,
+                    "tooltip": "Short edge in pixels; use multiples of 32 for H3 canvas alignment.",
                 }),
             },
             "optional": {
@@ -83,8 +83,8 @@ class RemakeConditioningExtended:
         frame_count, se = frames, short_edge
         if frame_count < 5 or frame_count > 362 or (frame_count - 5) % 17:
             raise ValueError(f"frames must be 17n+5 in 5..362, got {frame_count}")
-        if se < 480 or se > nodes.MAX_RESOLUTION:
-            raise ValueError(f"short_edge must be in 480..{nodes.MAX_RESOLUTION}, got {se}")
+        if se < 480 or se > nodes.MAX_RESOLUTION or se % 32:
+            raise ValueError(f"short_edge must be a multiple of 32 in 480..{nodes.MAX_RESOLUTION}, got {se}")
 
         refs = [image[:1, ..., :3] for image in (ref_1, ref_2, ref_3, ref_4) if image is not None]
         pins = [int(value) for value in pins.replace(",", " ").split()]
